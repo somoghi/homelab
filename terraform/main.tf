@@ -10,11 +10,14 @@ terraform {
 }
 
 provider "proxmox" {
-  insecure = true 
+  insecure = true
   # Get secrets from terminal
   # export PROXMOX_VE_ENDPOINT=...
   # export PROXMOX_VE_API_TOKEN=...
-
+  ssh {
+    agent    = true
+    username = "root"
+  }
 }
 # actual pubkey read from ansible.tfvars
 variable "ansible_ssh_public_key" {
@@ -45,7 +48,7 @@ resource "proxmox_virtual_environment_vm" "vault_server" {
 
   disk {
     datastore_id = "local-lvm"
-    file_id      = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
+    file_id      = proxmox_download_file.ubuntu_cloud_image.id
     interface    = "scsi0"
     size         = 20
   }
@@ -63,18 +66,19 @@ resource "proxmox_virtual_environment_vm" "vault_server" {
       }
     }
     user_account {
-        username = "ansible"
-        keys     = [var.ansible_ssh_public_key]
-    }
-    output "vault_ip_address" {
-        value       = "192.168.1.50"
+      username = "ansible"
+      keys     = [var.ansible_ssh_public_key]
     }
   }
 }
-resource "proxmox_virtual_environment_download_file" "ubuntu_cloud_image" {
-    content_type = "import"
-    datastore_id = "local"
-    node_name    = "pve"
-    url          = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
-    file_name = "noble-server-cloudimg-amd64.qcow2"
+output "vault_ip_address" {
+  value = "10.0.20.100"
+}
+
+resource "proxmox_download_file" "ubuntu_cloud_image" {
+  content_type = "import"
+  datastore_id = "local"
+  node_name    = "pve-mini"
+  url          = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
+  file_name    = "noble-server-cloudimg-amd64.qcow2"
 }
