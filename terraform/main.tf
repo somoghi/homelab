@@ -6,14 +6,49 @@ terraform {
       source  = "bpg/proxmox"
       version = "0.100.0"
     }
+    vault = {
+      source  = "hashicorp/vault"
+      version = "~> 5.8.0"
+    }
   }
+
+}
+variable "vault_role_id" {
+  type        = string
+  description = "RoleID for the Terraform AppRole"
+}
+
+variable "vault_secret_id" {
+  type        = string
+  description = "SecretID for the Terraform AppRole"
+  sensitive   = true
+}
+
+provider "vault" {
+  address         = "http://10.0.20.100:8200"
+  skip_tls_verify = true
+
+  skip_child_token = true # Not needed because of strict ttl rules in place already
+  auth_login {
+    path = "auth/approle/login"
+    parameters = {
+      role_id   = var.vault_role_id
+      secret_id = var.vault_secret_id
+    }
+  }
+}
+
+data "vault_kv_secret_v2" "proxmox_creds" {
+  mount = "secret"
+  name  = "proxmox/api_token"
 }
 
 provider "proxmox" {
   insecure = true
-  # Get secrets from terminal
-  # export PROXMOX_VE_ENDPOINT=...
-  # export PROXMOX_VE_API_TOKEN=...
+
+  endpoint  = "https://10.0.10.10:8006"
+  api_token = data.vault_kv_secret_v2.proxmox_creds.data["token"]
+
   ssh {
     agent    = true
     username = "root"
