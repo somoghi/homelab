@@ -69,6 +69,23 @@ EOF
     file_name = "docker-cloud-config.yaml"
   }
 }
+provider "proxmox" {
+  insecure = true
+
+  endpoint  = "https://10.0.10.10:8006"
+  api_token = data.vault_kv_secret_v2.proxmox_creds.data["token"]
+
+  ssh {
+    agent    = true
+    username = "root"
+  }
+}
+# actual pubkey read from ansible.tfvars
+variable "ansible_ssh_public_key" {
+  type        = string
+  description = "The public SSH key for the Ansible control node"
+}
+
 
 # Provision the Debian VM
 resource "proxmox_virtual_environment_vm" "docker_host" {
@@ -76,7 +93,7 @@ resource "proxmox_virtual_environment_vm" "docker_host" {
   description = "Debian 13 - Main Docker Host"
   tags        = ["compute", "docker"]
 
-  node_name = "pve"
+  node_name = "pve-mini"
   vm_id     = 500
 
   agent {
@@ -117,7 +134,7 @@ resource "proxmox_virtual_environment_vm" "docker_host" {
       keys     = [var.ansible_ssh_public_key]
     }
 
-    user_data_file_id = proxmox_virtual_environment_file.docker_user_data.id
+    vendor_data_file_id = proxmox_virtual_environment_file.docker_user_data.id
   }
 }
 
@@ -130,5 +147,5 @@ resource "proxmox_download_file" "debian_cloud_image" {
   datastore_id = "local"
   node_name    = "pve-mini"
   url          = "https://cloud.debian.org/images/cloud/trixie/latest/debian-13-generic-amd64.qcow2"
-  file_name    = "trixie-server-cloudimg-generic-amd64.qcow2"
+  file_name    = "trixie-server-cloudimg-amd64.qcow2"
 }
