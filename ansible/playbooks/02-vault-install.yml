@@ -1,7 +1,7 @@
 ---
 - name: Install and Configure HashiCorp Vault
   hosts: vault_servers
-  gather_facts: yes
+  gather_facts: true
 
   tasks:
     - name: Install prerequisite packages
@@ -11,7 +11,7 @@
           - software-properties-common
           - curl
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Add HashiCorp GPG key
       apt_key:
@@ -26,8 +26,8 @@
     - name: Install Vault
       apt:
         name: vault
-        state: latest
-        update_cache: yes
+        state: present
+        update_cache: true
 
     - name: Create Vault configuration file
       copy:
@@ -47,7 +47,7 @@
           listener "tcp" {
             address       = "0.0.0.0:8200"
             # TODO: Setup TLS for prod
-            tls_disable   = 1 
+            tls_disable   = 1
           }
 
           disable_mlock = true
@@ -63,5 +63,5 @@
     - name: Enable and start Vault service
       systemd:
         name: vault
-        enabled: yes
+        enabled: true
         state: started

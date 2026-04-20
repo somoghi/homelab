@@ -1,0 +1,10 @@
+---
+
+- name: Harden OS (by https://github.com/dev-sec/ansible-collection-hardening)
+  hosts: docker_host
+  roles:
+    - devsec.hardening.os_hardening
+  vars:
+    sysctl_overwrite:
+      # Necessary for Docker
+      net.ipv4.ip_forward: 1
