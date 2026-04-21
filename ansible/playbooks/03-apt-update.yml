@@ -1,0 +1,44 @@
+---
+- name: Update Servers
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Update pkg cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Apply updates
+      ansible.builtin.apt:
+        upgrade: safe
+      register: apt_result
+
+    - name: Display updated pkgs
+      ansible.builtin.debug:
+        msg: "Packages updated on {{ inventory_hostname }}"
+      when: apt_result is changed
+
+    - name: Check if reboot required
+      ansible.builtin.stat:
+        path: /var/run/reboot_required
+      register: reboot_file
+
+    - name: Set reboot needed fact
+      ansible.builtin.set_fact:
+        reboot_needed: >-
+          {{ ansible_os_family == "Debian" and reboot_file.stat.exists | default(false) }}
+
+    # Report which servers need rebooting
+    - name: Report reboot status
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }}: {{ 'REBOOT NEEDED' if reboot_needed else 'No reboot needed' }}"
+
+    # Only reboot servers that need it
+    - name: Reboot if required
+      ansible.builtin.reboot:
+        msg: "Rebooting for pending system updates"
+        reboot_timeout: 600
+        post_reboot_delay: 30
+        test_command: "systemctl is-system-running"
+      when: reboot_needed | bool
