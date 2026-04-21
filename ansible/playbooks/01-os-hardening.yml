@@ -1,7 +1,7 @@
 ---
 
 - name: Harden OS (by https://github.com/dev-sec/ansible-collection-hardening)
-  hosts: docker_host
+  hosts: docker_media,k3s_cluster
   roles:
     - devsec.hardening.os_hardening
   vars:

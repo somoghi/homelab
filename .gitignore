@@ -5,3 +5,4 @@
 *.lock
 *.lock.hcl
 *.tfvars
+/ansible/ansible.cfg
