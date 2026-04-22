@@ -38,7 +38,7 @@ provider "vault" {
   }
 }
 
-data "vault_kv_secret_v2" "proxmox_creds" {
+ephemeral "vault_kv_secret_v2" "proxmox_creds" {
   mount = "secret"
   name  = "proxmox/api_token"
 }
@@ -47,7 +47,7 @@ provider "proxmox" {
   insecure = true
 
   endpoint  = "https://10.0.10.10:8006"
-  api_token = data.vault_kv_secret_v2.proxmox_creds.data["token"]
+  api_token = ephemeral.vault_kv_secret_v2.proxmox_creds.data["token"]
 
   ssh {
     agent    = true
